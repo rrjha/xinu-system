@@ -24,6 +24,10 @@ void	clkhandler()
 
 	csrptr->tisr = AM335X_TIMER1MS_TISR_OVF_IT_FLAG;
 
+	/* Increments the ms counter */
+
+	clktime_ms++;
+
 	/* Decrement 1000ms counter */
 
 	count1000--;
