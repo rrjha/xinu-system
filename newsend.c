@@ -56,7 +56,7 @@ uint32	sendMsgs(
 {
 	intmask	mask;			/* Saved interrupt mask		*/
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
-	int sent_count=0;
+	uint32 sent_count=0;
 
 	mask = disable();
 	if (isbadpid(pid) || (msgs == NULL) || (msg_count == 0)) {
