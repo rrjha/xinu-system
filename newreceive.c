@@ -19,11 +19,9 @@ umsg32	receiveMsg(void)
 		prptr->prstate = PR_RECV;
 		resched();		/* Block until message arrives	*/
 	}
-	kprintf("rcv: before dq: qin=%d, qout=%d, count=%d\n", prptr->nmsg.qin, prptr->nmsg.qout, prptr->nmsg.count);
 	msg = prptr->nmsg.msgq[prptr->nmsg.qout];	/* Retrieve message		*/
 	prptr->nmsg.qout = (prptr->nmsg.qout+1)%MAX_MSGS;
 	prptr->nmsg.count--;
-	kprintf("rcv: after dq: qin=%d, qout=%d, count=%d\n", prptr->nmsg.qin, prptr->nmsg.qout, prptr->nmsg.count);
 
 	restore(mask);
 	return msg;
@@ -60,4 +58,3 @@ syscall	receiveMsgs(
 	restore(mask);
 	return OK;
 }
-
