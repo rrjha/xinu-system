@@ -57,7 +57,7 @@ pid32	create(
 	prptr->prdesc[1] = CONSOLE;	/* stdout is CONSOLE device	*/
 	prptr->prdesc[2] = CONSOLE;	/* stderr is CONSOLE device	*/
 
-	/* Zero out memory for new send and receive */
+	/* Zero out memory for new send and receive syscalls added */
 	memset(&(prptr->nmsg), 0, sizeof(prptr->nmsg));
 
 	/* Initialize stack as if the process was called		*/

@@ -8,8 +8,6 @@ sid32 sem_s = 0, sem_r1=0, sem_r2=0, mutex_console=0;
 
 process sender(void)
 {
-	/* Simple sender: Send an int message */
-//	sendMsg(recver_id, (('H'<<8)|'i') & 0xFFFF);
 	umsg32 msg = 123, nmsg[MCOUNT]={135, 246, 579};
 	int32 i=0, res = OK;
 	pid32 pids[2] = {recver_id1, recver_id2};
@@ -58,10 +56,8 @@ process sender(void)
 
 process recver(sid32 sem_r)
 {
-	/* Simple receiver: Receive an int message */
 	int32 i=0, res=SYSERR;
 	umsg32 msg = 0, nmsg[MCOUNT]={0};
-//	printf("Got message \"%c%c\" from sender\n",((msg>>8) & 0xFF), (msg & 0xFF));
 	wait(sem_r);
 	for (i=0; i<MCOUNT; i++) {
 		msg = receiveMsg();
