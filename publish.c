@@ -1,5 +1,8 @@
 #include <xinu.h>
 #include "subscriber.h"
+#include "dbg.h"
+
+extern sid32 mutex_console;
 
 extern struct subscriber SUB_TABLE[MAX_GROUPS][MAX_TOPICS][MAX_SUBSCRIBERS];
 
@@ -13,6 +16,8 @@ process broker(topic16 topic, uint32  data)
 		if((SUB_TABLE[grp][tpc][i].spid > 0)  && (SUB_TABLE[grp][tpc][i].handler != NULL)){
 			/* Note that we don't use semaphore to lock here as thread-safety doesn't ensure reentrancy */
 			/* And we can easily lock up the system based on handler. So the thread-safety is best left to handler */
+
+			sync_print(("Call subscriber at pos %d of group=%d with topic16=%u and data=%u \n", i, grp, topic, data));
 			SUB_TABLE[grp][tpc][i].handler(topic, data);
 		}
 	}
@@ -30,8 +35,9 @@ syscall  publish(topic16  topic,  uint32  data)
 
 
 	mask = disable();
-
-	
+	kprintf("Data passed = %u\n", data);
+	kprintf("Create broker with topic16=%u\n", topic);
+	kprintf("Data=%u\n", data);
 	/* Create a broker process for distribution */
 	broker_pid = create(broker, 4096, 50, "broker", 2, topic, data);
 	if(broker_pid < 0) {
@@ -40,10 +46,10 @@ syscall  publish(topic16  topic,  uint32  data)
 		return SYSERR;
 	}
 
-	/* Rename the broker's name to be per broker */
+	/* Rename the broker's name to be per process broker
 	sprintf(broker_name, "%s%d", "broker", broker_pid);
 	prptr = &proctab[broker_pid];
-	strcpy(prptr->prname, broker_name);
+	strcpy(prptr->prname, broker_name);*/
 	
 
 	/* Resume the broker to continue with publishing */
