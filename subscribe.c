@@ -5,7 +5,7 @@
 /* Topic table */
 struct topic TOPIC_TABLE[MAX_TOPICS];
 
-syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
+syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  void*,  uint32))
 {
 	intmask	mask;			/* Saved interrupt mask		*/
 	int i=0, j=0, slot=MAX_SUBSCRIBERS;
@@ -30,7 +30,6 @@ syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
 		       }
 		}
 		first_subscriber = FALSE;
-		kprintf("Topic table initialized\n");
 	}
 
 	/* Offset into topic table and check if the process is registered for any other group */

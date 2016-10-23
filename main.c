@@ -12,10 +12,18 @@ bool8 cb1_rcved = FALSE, cb2_rcved = FALSE;
 sid32 mutex_console=0;
 
 
-void cb_subscriber1(topic16 topic,  uint32 data)
+void cb_subscriber1(topic16 topic,  void*  data,  uint32  size)
 {
-	sync_print(("Function cb_subscriber1() is called with topic16=0x%04X and data=0x%X \n", topic, data));
-	cb1_rcved = TRUE;
+	/* call back must know how to decode this void pointer */
+	char *temp = NULL;
+	int i=0;
+	sleep(5); //Allow publisher to change data before copying
+	wait(mutex_console);
+	temp = (char*) data;
+	for (i=0; i<5; i++)
+		printf("%d, ", temp[i]);
+	printf("\n");
+	signal(mutex_console);
 }
 
 
@@ -29,13 +37,11 @@ void cb_subscriber2(topic16 topic,  uint32 data)
 process publisher(void)
 {
 	topic16 tpc = 0x013F;
-	uint32 data = 0xFF;
-	int res = publish(tpc, data);
-	if(res == OK) {
-		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc))
-	}
+	char  data[5]  =  {  1,  2,  3,  4,  5  };  
+	publish(tpc,  data,  5); 
+	data[2]  =  0;
 
-	tpc = 0x023F;
+/*	tpc = 0x023F;
 	data = 0xDD;
 	res = publish(tpc, data);
 	if(res == OK) {
@@ -49,7 +55,7 @@ process publisher(void)
 	res = publish(tpc, data);
 	if(res == OK) {
 		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc))
-	}
+	}*/
 
 	return OK;
 }
@@ -82,7 +88,7 @@ process subscriber2(void)
 {
 	int res=SYSERR;
 	topic16 tpc = 0x023F;
-	res = subscribe(tpc, cb_subscriber2);
+//	res = subscribe(tpc, cb_subscriber2);
 	if(res == OK) {
 		sync_print(("Process pid-%d subscribed with a topic16 value of 0x%04X and handler cb_subscriber2()\n", subscriber2_id, tpc))
 	}
@@ -105,7 +111,7 @@ process	main(void)
 	/* Resume subscriber-1 first */
 	resume(subscriber1_id);
 
-	resume(subscriber2_id);
+//	resume(subscriber2_id);
 
 	resume(publisher_id);
 	
