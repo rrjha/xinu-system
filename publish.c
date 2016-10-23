@@ -2,30 +2,25 @@
 #include "subscriber.h"
 #include "dbg.h"
 
-extern sid32 mutex_console;
-
-extern struct subscriber SUB_TABLE[MAX_GROUPS][MAX_TOPICS][MAX_SUBSCRIBERS];
+extern struct topic TOPIC_TABLE[MAX_TOPICS];
 
 process broker(topic16 topic, uint32  data)
 {
 	uint8 grp = (topic>>8)&0xFF;
 	uint8 tpc = (topic&0xFF);
-	uint32 i=0, grp_iter = grp, grp_max = grp+1;
+	uint32 i=0;
 
-	if(grp == 0){
-		/* Wildcard - set the boundaries accordingly before looping */
-		grp_iter = 1;
-		grp_max = MAX_GROUPS;
-	}
-
-	for(grp_iter; grp_iter < grp_max; grp_iter++){
+	if (!grp){
+		/* Wildcard */
 		for (i=0; i<MAX_SUBSCRIBERS; i++) {
-			if((SUB_TABLE[grp_iter][tpc][i].spid > 0)  && (SUB_TABLE[grp_iter][tpc][i].handler != NULL)){
-				/* Note that we don't use semaphore to lock here as thread-safety doesn't ensure reentrancy */
-				/* And we can easily lock up the system based on handler. So the thread-safety is best left to handler */
-
-				SUB_TABLE[grp_iter][tpc][i].handler(topic, data);
-			}
+			if((TOPIC_TABLE[tpc].subs[i].pid > 0) && (TOPIC_TABLE[tpc].subs[i].handler != NULL))
+				TOPIC_TABLE[tpc].subs[i].handler(topic, data);
+		}
+	}
+	else{
+		for (i=0; i<MAX_SUBSCRIBERS; i++) {
+			if((TOPIC_TABLE[tpc].subs[i].pid > 0) && (TOPIC_TABLE[tpc].subs[i].handler != NULL) && (TOPIC_TABLE[tpc].subs[i].group == grp))
+				TOPIC_TABLE[tpc].subs[i].handler(topic, data);
 		}
 	}
 
@@ -38,7 +33,7 @@ syscall  publish(topic16  topic,  uint32  data)
 	intmask	mask;			/* Saved interrupt mask		*/
 	pid32 broker_pid = -1;
 //	char broker_name[PNMLEN];
-	struct	procent *prptr;
+//	struct	procent *prptr;
 
 
 	mask = disable();

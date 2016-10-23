@@ -9,8 +9,8 @@ pid32 subscriber2_id;
 
 bool8 cb1_rcved = FALSE, cb2_rcved = FALSE;
 
-
 sid32 mutex_console=0;
+
 
 void cb_subscriber1(topic16 topic,  uint32 data)
 {
@@ -42,7 +42,7 @@ process publisher(void)
 		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc))
 	}
 
-	sleep(5);
+//	sleep(5);
 
 	tpc = 0x003F;
 	data = 0xAA;
@@ -57,22 +57,22 @@ process publisher(void)
 /* Subscriber2 */
 process subscriber1(void)
 {
-	static int cnt=1;
 	int res=SYSERR;
 	topic16 tpc = 0x013F;
 	res = subscribe(tpc, cb_subscriber1);
 	if(res == OK) {
 		sync_print(("Process pid-%d subscribed with a topic16 value of 0x%04X and handler cb_subscriber1()\n", subscriber1_id, tpc))
 	}
-
-	while(1) {
+	sleep(10);
+	unsubscribe(tpc);
+/*	while(1) {
 		if(cb1_rcved) {
 			unsubscribe(tpc);
 			break;
+		}
 		else
 			yield();
-		}
-	}
+	}*/
 	return OK;
 }
 
@@ -80,7 +80,6 @@ process subscriber1(void)
 /* Subscriber2 */
 process subscriber2(void)
 {
-	static int cnt=1;
 	int res=SYSERR;
 	topic16 tpc = 0x023F;
 	res = subscribe(tpc, cb_subscriber2);
@@ -94,7 +93,6 @@ process subscriber2(void)
 
 process	main(void)
 {
-	int32 ch=0;
 	recvclr();
 
 	mutex_console = semcreate(1);
