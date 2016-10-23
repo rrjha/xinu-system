@@ -10,15 +10,22 @@ process broker(topic16 topic, uint32  data)
 {
 	uint8 grp = (topic>>8)&0xFF;
 	uint8 tpc = (topic&0xFF);
-	int i=0;
+	uint32 i=0, grp_iter = grp, grp_max = grp+1;
 
-	for (i=0; i<MAX_SUBSCRIBERS; i++) {
-		if((SUB_TABLE[grp][tpc][i].spid > 0)  && (SUB_TABLE[grp][tpc][i].handler != NULL)){
-			/* Note that we don't use semaphore to lock here as thread-safety doesn't ensure reentrancy */
-			/* And we can easily lock up the system based on handler. So the thread-safety is best left to handler */
+	if(grp == 0){
+		/* Wildcard - set the boundaries accordingly before looping */
+		grp_iter = 1;
+		grp_max = MAX_GROUPS;
+	}
 
-			sync_print(("Call subscriber at pos %d of group=%d with topic16=%u and data=%u \n", i, grp, topic, data));
-			SUB_TABLE[grp][tpc][i].handler(topic, data);
+	for(grp_iter; grp_iter < grp_max; grp_iter++){
+		for (i=0; i<MAX_SUBSCRIBERS; i++) {
+			if((SUB_TABLE[grp_iter][tpc][i].spid > 0)  && (SUB_TABLE[grp_iter][tpc][i].handler != NULL)){
+				/* Note that we don't use semaphore to lock here as thread-safety doesn't ensure reentrancy */
+				/* And we can easily lock up the system based on handler. So the thread-safety is best left to handler */
+
+				SUB_TABLE[grp_iter][tpc][i].handler(topic, data);
+			}
 		}
 	}
 
@@ -30,14 +37,11 @@ syscall  publish(topic16  topic,  uint32  data)
 {
 	intmask	mask;			/* Saved interrupt mask		*/
 	pid32 broker_pid = -1;
-	char broker_name[PNMLEN];
+//	char broker_name[PNMLEN];
 	struct	procent *prptr;
 
 
 	mask = disable();
-	kprintf("Data passed = %u\n", data);
-	kprintf("Create broker with topic16=%u\n", topic);
-	kprintf("Data=%u\n", data);
 	/* Create a broker process for distribution */
 	broker_pid = create(broker, 4096, 50, "broker", 2, topic, data);
 	if(broker_pid < 0) {

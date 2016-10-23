@@ -32,14 +32,23 @@ process publisher(void)
 	uint32 data = 0xFF;
 	int res = publish(tpc, data);
 	if(res == OK) {
-		sync_print(("Process pid-%d publishes  data  %d  to  topic16 0x%04X\n", publisher_id, data, tpc))
+		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc))
 	}
 
 	tpc = 0x023F;
-	data = 0x55;
+	data = 0xDD;
 	res = publish(tpc, data);
 	if(res == OK) {
-		sync_print(("Process pid-%d publishes  data  %d  to  topic16 0x%04X\n", publisher_id, data, tpc))
+		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc))
+	}
+
+	sleep(5);
+
+	tpc = 0x003F;
+	data = 0xAA;
+	res = publish(tpc, data);
+	if(res == OK) {
+		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc))
 	}
 
 	return OK;
@@ -55,13 +64,15 @@ process subscriber1(void)
 	if(res == OK) {
 		sync_print(("Process pid-%d subscribed with a topic16 value of 0x%04X and handler cb_subscriber1()\n", subscriber1_id, tpc))
 	}
+
 	while(1) {
-		if(cb1_rcved == FALSE)
-			sleep(1);
-		else
+		if(cb1_rcved) {
+			unsubscribe(tpc);
 			break;
+		else
+			yield();
+		}
 	}
-	unsubscribe(tpc);
 	return OK;
 }
 
@@ -76,13 +87,8 @@ process subscriber2(void)
 	if(res == OK) {
 		sync_print(("Process pid-%d subscribed with a topic16 value of 0x%04X and handler cb_subscriber2()\n", subscriber2_id, tpc))
 	}
-	while(1) {
-		if(cb2_rcved == FALSE)
-			sleep(1);
-		else
-			break;
-	}
-	unsubscribe(tpc);
+	sleep(10);
+//	unsubscribe(tpc);
 	return OK;
 }
 

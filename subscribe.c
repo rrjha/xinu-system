@@ -14,8 +14,6 @@ syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
 
 	mask = disable();
 
-	kprintf("Enter subscribe with topic=0x%04H and pid=%d\n", topic, currpid);
-
 	if(first_subscriber)
 	{
 		/* Initialize the subscriber table */
@@ -27,13 +25,12 @@ syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
 					SUB_TABLE[i][j][k].handler = NULL;
 				}
 		first_subscriber = FALSE;
-		kprintf("Initialized the topic table\n");
+		kprintf("Topic table initialized\n");
 	}
 		
 	/* Topic values range from 0 to FFFF and topic is uint16 */
 	/* So check only for handler */
 	if (handler == NULL) {
-		kprintf("Handler NULL for pid=%d\n", currpid);
 		restore(mask);
 		return SYSERR;
 	}
@@ -42,7 +39,6 @@ syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
 	for (i=0; i<MAX_GROUPS; i++) {
 		for(j=0; j<MAX_SUBSCRIBERS;j++) {
 			if((SUB_TABLE[i][tpc][j].spid == currpid) && (SUB_TABLE[i][tpc][j].handler != NULL)){
-				kprintf("pid=%d exists in other group\n", currpid);
 				restore(mask);
 				return SYSERR;
 			}
@@ -51,24 +47,20 @@ syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
 
 	/* Register this subscriber for supplied topic */
 	for (i=0; i<MAX_SUBSCRIBERS; i++) {
-		kprintf("Iter=%d, spid = %d, handler_address = %X\n", i, SUB_TABLE[grp][tpc][i].spid, SUB_TABLE[grp][tpc][i].handler);
 		if(((SUB_TABLE[grp][tpc][i].spid) <= 0) && (SUB_TABLE[grp][tpc][i].handler == NULL)) {
 			/* First empty slot found - insert the subscriber */
 			SUB_TABLE[grp][tpc][i].spid = currpid;
 			SUB_TABLE[grp][tpc][i].handler= handler;
-			kprintf("Inserted in group=%02u, topic = %02u at pos %d, spid = %d, handler_address = 0x%X\n", grp, tpc, i, SUB_TABLE[grp][tpc][i].spid, SUB_TABLE[grp][tpc][i].handler);
 			break;
 		}
 	}
 
 	/* No space left to subscribe */
 	if(i == MAX_SUBSCRIBERS) {
-		kprintf("no space\n");
 		restore(mask);
 		return SYSERR;
 	}
 
-	kprintf("Exit subscribe for pid=%d\n", currpid);
 	restore(mask);		/* Restore interrupts */
 	return OK;
 }
@@ -84,7 +76,6 @@ syscall  unsubscribe(topic16  topic)
 	/* We don't care if the process didn't subscribe and is unsubscribing */
 	for (i=0; i<MAX_SUBSCRIBERS; i++) {
 		if(SUB_TABLE[grp][tpc][i].spid == currpid) {
-			/* First empty slot found - insert the subscriber */
 			SUB_TABLE[grp][tpc][i].spid = -1;
 			SUB_TABLE[grp][tpc][i].handler= NULL;
 		}
