@@ -4,7 +4,7 @@
 /* Topic table */
 struct topic TOPIC_TABLE[MAX_TOPICS];
 
-syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  uint32))
+syscall  subscribe(topic16  topic,  void  (*handler)(topic16,  void*,  uint32))
 {
 	intmask	mask;			/* Saved interrupt mask		*/
 	int32 i=0, slot=MAX_SUBSCRIBERS;

@@ -5,18 +5,20 @@ extern struct topic TOPIC_TABLE[MAX_TOPICS];
 /* Dyanmic Q for publish */
 struct publishQEntry *Qhead, *Qtail;
 
-int32 enqueue_publish_data(topic16  topic,  uint32  data)
+int32 enqueue_publish_data(topic16 topic, void* data, uint32 size)
 {
        struct publishQEntry *newEntry = NULL;
 
        newEntry = (struct publishQEntry *) getmem(sizeof(struct publishQEntry));
-       if(*((char*)newEntry) == SYSERR){
+	newEntry->data = (void*) getmem(size);
+       if((*((char*)newEntry) == SYSERR) ||(*((char*)newEntry->data) == SYSERR)) {
                /* We are out of memory - return error */
                return SYSERR;
        }
-       newEntry->data = data;
        newEntry->topic = topic;
 	newEntry->next = NULL;
+	newEntry->size = size;
+       memcpy(newEntry->data, data, size);
 
        if(Qtail == NULL){
                /* Empty Q - This is the first element */
@@ -32,7 +34,7 @@ int32 enqueue_publish_data(topic16  topic,  uint32  data)
 }
 
 
-syscall  publish(topic16  topic,  uint32  data)
+syscall  publish(topic16 topic, void* data, uint32 size)
 {
 	intmask	mask;			/* Saved interrupt mask		*/
 	int32 res = SYSERR;
@@ -40,7 +42,7 @@ syscall  publish(topic16  topic,  uint32  data)
 	mask = disable();
 
 	/* Enqueue the data */
-	res = enqueue_publish_data(topic, data);
+	res = enqueue_publish_data(topic, data, size);
 	if(res != OK){
 		restore(mask);
 		return SYSERR;

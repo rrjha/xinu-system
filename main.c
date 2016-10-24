@@ -59,16 +59,17 @@ process broker()
 				/* Wildcard */
 				for (i=0; i<MAX_SUBSCRIBERS; i++) {
 					if((TOPIC_TABLE[tpc].subs[i].pid > 0) && (TOPIC_TABLE[tpc].subs[i].handler != NULL))
-						TOPIC_TABLE[tpc].subs[i].handler(pubItem->topic, pubItem->data);
+						TOPIC_TABLE[tpc].subs[i].handler(pubItem->topic, pubItem->data, pubItem->size);
 				}
 			}
 			else{
 				for (i=0; i<MAX_SUBSCRIBERS; i++) {
 					if((TOPIC_TABLE[tpc].subs[i].pid > 0) && (TOPIC_TABLE[tpc].subs[i].handler != NULL) && (TOPIC_TABLE[tpc].subs[i].group == grp))
-						TOPIC_TABLE[tpc].subs[i].handler(pubItem->topic, pubItem->data);
+						TOPIC_TABLE[tpc].subs[i].handler(pubItem->topic, pubItem->data, pubItem->size);
 				}
 			}
 
+			freemem((char*)pubItem->data, pubItem->size);
 			freemem((char*)pubItem, sizeof(struct publishQEntry));
 		}
 		else
@@ -80,9 +81,19 @@ process broker()
 }
 
 
-void cb_subscriber1(topic16 topic,  uint32 data)
+void cb_subscriber1(topic16 topic,  void*  data,  uint32  size)
 {
-	sync_print(("Function cb_subscriber1() is called with topic16=0x%04X and data=0x%X \n", topic, data));
+	/* call back must know how to decode this void pointer */
+	char *temp = NULL;
+	int i=0;
+	sleep(8); //Allow publisher to change data before copying
+	wait(mutex_console);
+	printf("Data array in callback is :");
+	temp = (char*) data;
+	for (i=0; i<5; i++)
+		printf("%d, ", temp[i]);
+	printf("\n");
+	signal(mutex_console);
 }
 
 
@@ -94,28 +105,22 @@ void cb_subscriber2(topic16 topic,  uint32 data)
 /* Publisher */
 process publisher(void)
 {
-	topic16 tpc = 0x013F;
-	uint32 data = 0xFF;
-	int32 res = publish(tpc, data);
-	if(res == OK) {
-		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc));
-	}
+	topic16 tpc = 0x2;
+	int32 i=0;
+	char  data[5]  =  {  1,  2,  3,  4,  5  }/*, data1[5] = {3, 4, 5, 6, 7}, data2[5] = {6, 7, 8, 9, -1}*/;
+	publish(tpc,  data,  5);
+/*	tpc = 0x0102;
+	publish(tpc,  data1,  5);
 
-	tpc = 0x023F;
-	data = 0xDD;
-	res = publish(tpc, data);
-	if(res == OK) {
-		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc));
-	}
-
-	sleep(5);
-
-	tpc = 0x003F;
-	data = 0xAA;
-	res = publish(tpc, data);
-	if(res == OK) {
-		sync_print(("Process pid-%d publishes  data  0x%X  to  topic16 0x%04X\n", publisher_id, data, tpc));
-	}
+	tpc = 0x0002;
+	publish(tpc,  data2,  5);*/
+	data[2] = 0;
+	wait(mutex_console);
+	printf("Data array in publisher after modification is :");
+	for (i=0; i<5; i++)
+		printf("%d, ", data[i]);
+	printf("\n");
+	signal(mutex_console);
 
 	return OK;
 }
@@ -124,12 +129,16 @@ process publisher(void)
 process subscriber1(void)
 {
 	int32 res=SYSERR;
-	topic16 tpc = 0x013F;
+	topic16 tpc = 0x2;
 	res = subscribe(tpc, cb_subscriber1);
 	if(res == OK) {
 		sync_print(("Process pid-%d subscribed with a topic16 value of 0x%04X and handler cb_subscriber1()\n", subscriber1_id, tpc));
 	}
-	sleep(2);
+/*	res = unsubscribe(tpc);
+	if(res == OK) {
+		sync_print(("Process pid-%d unsubscribed with a topic16 value of 0x%04X\n", subscriber1_id, tpc));
+	}*/
+	sleep(20);
 //	unsubscribe(tpc);
 	return OK;
 }
@@ -140,7 +149,7 @@ process subscriber2(void)
 {
 	int32 res=SYSERR;
 	topic16 tpc = 0x023F;
-	res = subscribe(tpc, cb_subscriber2);
+//	res = subscribe(tpc, cb_subscriber2);
 	if(res == OK) {
 		sync_print(("Process pid-%d subscribed with a topic16 value of 0x%04X and handler cb_subscriber2()\n", subscriber2_id, tpc));
 	}
@@ -181,7 +190,7 @@ process	main(void)
 	/* Resume subscriber-1 first */
 	resume(subscriber1_id);
 
-	resume(subscriber2_id);
+	//resume(subscriber2_id);
 
 	resume(broker_pid);
 	resume(publisher_id);
