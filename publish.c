@@ -1,7 +1,5 @@
 #include <xinu.h>
 
-extern struct topic TOPIC_TABLE[MAX_TOPICS];
-
 /* Dyanmic Q for publish */
 struct publishQEntry *Qhead, *Qtail;
 

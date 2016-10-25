@@ -6,9 +6,6 @@
  *  kill  -  Kill a process and remove it from the system
  *------------------------------------------------------------------------
  */
-
-extern struct topic TOPIC_TABLE[MAX_TOPICS];
-
 syscall	kill(
 	  pid32		pid		/* ID of process to kill	*/
 	)
@@ -36,7 +33,6 @@ syscall	kill(
 			}
 		}
 	}
-	
 
 
 	if (--prcount <= 1) {		/* Last user process completes	*/
