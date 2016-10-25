@@ -11,9 +11,6 @@
 pid32 publisher_id, subscriber1_id, subscriber2_id;
 
 sid32 mutex_console=0;
-extern struct topic TOPIC_TABLE[MAX_TOPICS];
-
-extern struct publishQEntry *Qhead, *Qtail;
 
 struct publishQEntry* get_next_pending_publish()
 {
